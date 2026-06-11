@@ -124,14 +124,28 @@ function cfgSave(key, value) {
 var RTDB = 'https://lafocacheria-default-rtdb.firebaseio.com/velvet';
 
 function syncToCloud() {
-  var keys = ['general','hero','menu','services','testimonials','hours','social','gallery','colors','closedMsg'];
+  /* Recopila TODA la config de localStorage */
+  var keys = ['general','hero','menu','services','testimonials',
+              'hours','social','gallery','colors','closedMsg','amenities'];
   var allConfig = {};
   keys.forEach(function(key) {
     var v = localStorage.getItem('velvet_' + key);
     if (v) { try { allConfig[key] = JSON.parse(v); } catch(e) {} }
   });
 
+  /* Imágenes de galería (base64) */
+  var galleryImgs = {};
+  for (var i = 0; i < 12; i++) {
+    var img = localStorage.getItem('velvet_gallery_img_' + i);
+    if (img) galleryImgs[i] = img;
+  }
+  if (Object.keys(galleryImgs).length) allConfig._gallery_imgs = galleryImgs;
+
+  /* Timestamp para que el sitio detecte el cambio */
+  allConfig._updated = Date.now();
+
   var statusEl = document.getElementById('cloudStatus');
+  var saveBtn  = document.getElementById('globalSave');
   if (statusEl) { statusEl.textContent = '⏳ Publicando...'; statusEl.style.color = '#f0c040'; }
 
   fetch(RTDB + '.json', {
@@ -141,13 +155,26 @@ function syncToCloud() {
   })
   .then(function(r) { return r.ok ? r.json() : Promise.reject(r.status); })
   .then(function() {
-    if (statusEl) { statusEl.textContent = '🌐 Publicado en el sitio'; statusEl.style.color = '#A1DFCB'; }
-    showToast('🌐 Cambios publicados en lafocacheria.web.app');
+    /* ✅ Éxito: feedback visual */
+    if (statusEl) { statusEl.textContent = '✅ Sitio actualizado'; statusEl.style.color = '#A1DFCB'; }
+    if (saveBtn) {
+      saveBtn.textContent = '✅ Publicado';
+      saveBtn.style.background = '#A1DFCB';
+      saveBtn.style.color = '#0a0a0b';
+      setTimeout(function() {
+        saveBtn.textContent = '💾 Guardar Cambios';
+        saveBtn.style.background = '';
+        saveBtn.style.color = '';
+        if (statusEl) { statusEl.textContent = '🌐 En línea'; statusEl.style.color = '#A1DFCB'; }
+      }, 3000);
+    }
+    showToast('✅ Cambios en vivo en lafocacheria.web.app');
   })
   .catch(function(err) {
     console.warn('Cloud sync error:', err);
-    if (statusEl) { statusEl.textContent = '⚠️ Sin conexión a la nube'; statusEl.style.color = '#f08060'; }
-    showToast('⚠️ Guardado local. Activa RTDB para publicar en el sitio.', true);
+    if (statusEl) { statusEl.textContent = '⚠️ Sin conexión'; statusEl.style.color = '#f08060'; }
+    if (saveBtn) { saveBtn.textContent = '💾 Guardar Cambios'; saveBtn.style.background = ''; saveBtn.style.color = ''; }
+    showToast('⚠️ Error al publicar. Revisa la conexión.', true);
   });
 }
 window.syncToCloud = syncToCloud;
