@@ -1256,13 +1256,7 @@ input, select, textarea { font-family: inherit; }
   background: var(--dark-3);
   border: 1px solid rgba(255,255,255,.06);
   border-radius: var(--r-lg);
-  transition: opacity .5s ease, transform .5s ease, border-color .3s;
-  opacity: 0;
-  transform: translateY(24px);
-}
-.amen-card.visible {
-  opacity: 1;
-  transform: translateY(0);
+  transition: var(--transition);
 }
 .amen-card:hover {
   border-color: rgba(93,184,122,.2);

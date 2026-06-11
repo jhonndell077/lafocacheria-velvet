@@ -172,7 +172,6 @@ function initAdmin() {
   renderTestimonialsEditor();
   renderHoursEditor();
   renderGalleryEditor();
-  renderAmenitiesEditor();
   loadColorsPanel();
   syncColorPickers();
 }
@@ -321,19 +320,6 @@ function saveSection(name) {
         });
       });
       cfgSave('gallery', gItems);
-      break;
-    }
-    case 'amenities': {
-      var amenCards = [];
-      document.querySelectorAll('#amenitiesEditor .svc-row').forEach(function(row) {
-        var itemsRaw = row.querySelector('[data-field="items"]').value;
-        amenCards.push({
-          icon:  row.querySelector('[data-field="icon"]').value.trim(),
-          title: row.querySelector('[data-field="title"]').value.trim(),
-          items: itemsRaw.split('\n').map(function(l){ return l.trim(); }).filter(Boolean)
-        });
-      });
-      cfgSave('amenities', amenCards);
       break;
     }
     case 'dashboard':
@@ -723,52 +709,6 @@ function resetColors() {
   showToast('✓ Colores restaurados');
 }
 window.resetColors = resetColors;
-
-/* ────────────────────────────────────────────
-   AMENIDADES EDITOR
-──────────────────────────────────────────── */
-var DEFAULTS_AMENITIES = [
-  { icon: '♿', title: 'Accesibilidad', items: ['Sanitarios accesibles', 'Acceso para sillas de ruedas', 'Estacionamiento accesible'] },
-  { icon: '🚀', title: 'Servicios',     items: ['Entrega a domicilio', 'Para llevar', 'Consumo en el lugar', 'Servicio a la mesa', 'Reservaciones'] },
-  { icon: '💳', title: 'Métodos de Pago', items: ['Tarjetas de crédito', 'Tarjetas de débito', 'Efectivo', 'NFC / Pagos digitales'] },
-  { icon: '🅿',  title: 'Estacionamiento', items: ['Gratuito', 'Amplio espacio', 'Valet Parking', 'Vigilancia 24/7'] }
-];
-
-function renderAmenitiesEditor() {
-  var data = cfgLoad('amenities', DEFAULTS_AMENITIES);
-  var container = document.getElementById('amenitiesEditor');
-  if (!container) return;
-  container.innerHTML = data.map(function(card, ci) {
-    return '<div class="svc-row" style="flex-direction:column; gap:10px;" data-ci="' + ci + '">' +
-      '<div style="display:flex; gap:10px; align-items:center;">' +
-        '<input style="width:60px; text-align:center; font-size:1.4rem;" data-field="icon" value="' + (card.icon || '') + '" placeholder="🏠" />' +
-        '<input style="flex:1;" data-field="title" value="' + (card.title || '') + '" placeholder="Título de la tarjeta" />' +
-        '<button class="svc-del-btn" onclick="deleteAmenityCard(' + ci + ')" title="Eliminar tarjeta">🗑️</button>' +
-      '</div>' +
-      '<textarea data-field="items" rows="4" placeholder="Un ítem por línea" style="width:100%; resize:vertical; background:var(--dark-3); color:var(--white); border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:10px; font-size:.85rem;">' +
-        (Array.isArray(card.items) ? card.items.join('\n') : '') +
-      '</textarea>' +
-    '</div>';
-  }).join('');
-}
-window.renderAmenitiesEditor = renderAmenitiesEditor;
-
-function addAmenityCard() {
-  var data = cfgLoad('amenities', DEFAULTS_AMENITIES);
-  data.push({ icon: '✨', title: 'Nueva tarjeta', items: ['Ítem 1', 'Ítem 2'] });
-  cfgSave('amenities', data);
-  renderAmenitiesEditor();
-}
-window.addAmenityCard = addAmenityCard;
-
-function deleteAmenityCard(idx) {
-  var data = cfgLoad('amenities', DEFAULTS_AMENITIES);
-  data.splice(idx, 1);
-  cfgSave('amenities', data);
-  renderAmenitiesEditor();
-  showToast('Tarjeta eliminada');
-}
-window.deleteAmenityCard = deleteAmenityCard;
 
 /* ────────────────────────────────────────────
    SECURITY
