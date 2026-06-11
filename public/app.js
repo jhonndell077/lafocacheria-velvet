@@ -237,6 +237,41 @@ function applySiteConfig() {
     }
   }
 
+  /* Experiencia (exp-grid) */
+  const experience = loadCfg('experience', null);
+  if (experience && experience.length) {
+    const expGrid = document.querySelector('.exp-grid');
+    if (expGrid) {
+      expGrid.innerHTML = experience.map((item, i) => `
+        <div class="exp-item" data-delay="${i * 50}">
+          <div class="exp-icon">${item.icon || '✨'}</div>
+          <h3>${item.title || ''}</h3>
+          <p>${item.desc || ''}</p>
+        </div>
+      `).join('');
+      expGrid.querySelectorAll('.exp-item').forEach(el => {
+        if (typeof io !== 'undefined') io.observe(el);
+      });
+    }
+  }
+
+  /* ¿Por qué nosotros? (why-features) */
+  const whyus = loadCfg('whyus', null);
+  if (whyus && whyus.length) {
+    const whyFeatures = document.querySelector('.why-features');
+    if (whyFeatures) {
+      whyFeatures.innerHTML = whyus.map(item => `
+        <div class="why-feat">
+          <div class="wf-check">✓</div>
+          <div>
+            <h4>${item.title || ''}</h4>
+            <p>${item.desc || ''}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
   function setText(selector, text) {
     if (!text) return;
     const el = document.querySelector(selector);
@@ -249,45 +284,68 @@ applySiteConfig();
 
 /* ══════════════════════════════════════════════════════
    SINCRONIZACIÓN EN TIEMPO REAL — Firebase Realtime DB
-   Lee la config publicada desde el admin y aplica cambios
-   automáticamente SIN recargar la página.
+   3 mecanismos en paralelo para máxima confiabilidad:
+   1. Carga inicial al abrir la página
+   2. Server-Sent Events (instantáneo cuando admin guarda)
+   3. Polling cada 4 segundos (respaldo garantizado)
 ══════════════════════════════════════════════════════ */
 (function initCloudSync() {
   var RTDB = 'https://lafocacheria-default-rtdb.firebaseio.com/velvet';
+  var lastVersion = null; /* Detecta si los datos cambiaron antes de re-aplicar */
 
-  /* Aplica config de la nube al DOM y localStorage */
+  /* Aplica config de la nube al DOM */
   function applyFromCloud(data) {
     if (!data || typeof data !== 'object') return;
-    var keys = ['general','hero','menu','services','testimonials','hours','social','gallery','colors','closedMsg'];
+    /* Evitar re-renders innecesarios comparando versión */
+    var incomingVersion = data._updated || JSON.stringify(data).length;
+    if (incomingVersion === lastVersion) return;
+    lastVersion = incomingVersion;
+
+    var keys = ['general','hero','menu','services','testimonials',
+                'hours','social','gallery','colors','closedMsg','amenities',
+                'experience','whyus'];
     keys.forEach(function(key) {
-      if (data[key] !== undefined) {
+      if (data[key] !== undefined)
         localStorage.setItem('velvet_' + key, JSON.stringify(data[key]));
-      }
     });
+
+    /* Imágenes de galería (almacenadas como base64) */
+    if (data._gallery_imgs && typeof data._gallery_imgs === 'object') {
+      Object.entries(data._gallery_imgs).forEach(function(entry) {
+        if (entry[1]) localStorage.setItem('velvet_gallery_img_' + entry[0], entry[1]);
+      });
+    }
+
     applySiteConfig();
   }
 
-  /* Carga inicial desde la nube (sobreescribe localStorage con datos del admin) */
-  fetch(RTDB + '.json')
-    .then(function(r) { return r.ok ? r.json() : null; })
-    .then(function(data) { if (data) applyFromCloud(data); })
-    .catch(function() { /* Sin conexión: usa localStorage */ });
+  /* ① Carga inicial */
+  function fetchConfig() {
+    return fetch(RTDB + '.json')
+      .then(function(r) { return r.ok ? r.json() : null; })
+      .then(function(data) { if (data) applyFromCloud(data); })
+      .catch(function() {});
+  }
+  fetchConfig();
 
-  /* Escucha cambios en tiempo real vía Server-Sent Events */
+  /* ② Server-Sent Events — instantáneo */
   try {
     var es = new EventSource(RTDB + '.json');
     es.addEventListener('put', function(e) {
       try {
         var payload = JSON.parse(e.data);
-        /* 'put' con path '/' trae todo el objeto en payload.data */
-        var cfg = (payload.path === '/') ? payload.data : null;
+        var cfg = payload.path === '/' ? payload.data : null;
         if (cfg) applyFromCloud(cfg);
       } catch(err) {}
     });
-    es.onerror = function() { es.close(); }; /* Cierra si falla, evita bucle */
+    /* Si SSE falla, el polling lo cubre */
+    es.onerror = function() { try { es.close(); } catch(e) {} };
   } catch(err) {}
 
-  /* Fallback: localStorage storage event (misma pestaña del admin) */
+  /* ③ Polling cada 4 segundos — garantía absoluta */
+  setInterval(fetchConfig, 4000);
+
+  /* ④ Storage event — mismo navegador, otra pestaña */
   window.addEventListener('storage', function(e) {
     if (!e.key || e.key.startsWith('velvet_')) applySiteConfig();
   });

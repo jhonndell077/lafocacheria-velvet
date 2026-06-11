@@ -83,6 +83,12 @@
       <button class="sb-item" data-section="amenities">
         <span class="sb-icon">🏠</span><span>Comodidades</span>
       </button>
+      <button class="sb-item" data-section="experience">
+        <span class="sb-icon">🎉</span><span>Experiencia</span>
+      </button>
+      <button class="sb-item" data-section="whyus">
+        <span class="sb-icon">🏆</span><span>¿Por qué nosotros?</span>
+      </button>
       <button class="sb-item" data-section="colors">
         <span class="sb-icon">🎨</span><span>Colores & Marca</span>
       </button>
@@ -423,6 +429,26 @@
       </div>
       <div id="amenitiesEditor" style="display:flex; flex-direction:column; gap:16px;"></div>
       <button class="btn-add-row" onclick="addAmenityCard()" style="margin-top:12px;">＋ Agregar tarjeta</button>
+    </section>
+
+    <!-- ─── SECTION: Experiencia ─── -->
+    <section class="admin-section" id="sec-experience">
+      <div class="sec-header">
+        <h2>🎉 Experiencia</h2>
+        <p>Edita los íconos, títulos y descripciones de la sección "Todo lo que necesitas en un solo lugar".</p>
+      </div>
+      <div id="experienceEditor" style="display:flex; flex-direction:column; gap:12px;"></div>
+      <button class="btn-add-row" onclick="addExperienceItem()" style="margin-top:12px;">＋ Agregar ítem</button>
+    </section>
+
+    <!-- ─── SECTION: ¿Por qué nosotros? ─── -->
+    <section class="admin-section" id="sec-whyus">
+      <div class="sec-header">
+        <h2>🏆 ¿Por qué nosotros?</h2>
+        <p>Edita las características que aparecen en la sección "Lo que dicen nuestros clientes".</p>
+      </div>
+      <div id="whyusEditor" style="display:flex; flex-direction:column; gap:12px;"></div>
+      <button class="btn-add-row" onclick="addWhyUsItem()" style="margin-top:12px;">＋ Agregar ítem</button>
     </section>
 
     <!-- ─── SECTION: Colors ─── -->

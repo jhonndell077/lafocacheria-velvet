@@ -126,7 +126,8 @@ var RTDB = 'https://lafocacheria-default-rtdb.firebaseio.com/velvet';
 function syncToCloud() {
   /* Recopila TODA la config de localStorage */
   var keys = ['general','hero','menu','services','testimonials',
-              'hours','social','gallery','colors','closedMsg','amenities'];
+              'hours','social','gallery','colors','closedMsg','amenities',
+              'experience','whyus'];
   var allConfig = {};
   keys.forEach(function(key) {
     var v = localStorage.getItem('velvet_' + key);
@@ -200,6 +201,8 @@ function initAdmin() {
   renderHoursEditor();
   renderGalleryEditor();
   renderAmenitiesEditor();
+  renderExperienceEditor();
+  renderWhyUsEditor();
   loadColorsPanel();
   syncColorPickers();
 }
@@ -457,6 +460,23 @@ function saveSectionSilent(name) {
                          items: itemsRaw.split('\n').map(function(l){ return l.trim(); }).filter(Boolean) });
       });
       cfgSave('amenities', amenCards); break;
+    }
+    case 'experience': {
+      var expItems = [];
+      document.querySelectorAll('#experienceEditor .exp-edit-row').forEach(function(row) {
+        expItems.push({ icon: row.querySelector('[data-field="icon"]').value.trim(),
+                        title: row.querySelector('[data-field="title"]').value.trim(),
+                        desc: row.querySelector('[data-field="desc"]').value.trim() });
+      });
+      cfgSave('experience', expItems); break;
+    }
+    case 'whyus': {
+      var whyItems = [];
+      document.querySelectorAll('#whyusEditor .why-edit-row').forEach(function(row) {
+        whyItems.push({ title: row.querySelector('[data-field="title"]').value.trim(),
+                        desc: row.querySelector('[data-field="desc"]').value.trim() });
+      });
+      cfgSave('whyus', whyItems); break;
     }
     default: break;
   }
@@ -886,6 +906,98 @@ function deleteAmenityCard(idx) {
 window.deleteAmenityCard = deleteAmenityCard;
 
 /* ────────────────────────────────────────────
+   EXPERIENCIA EDITOR
+──────────────────────────────────────────── */
+var DEFAULTS_EXPERIENCE = [
+  { icon: '🎵', title: 'Música en Vivo',       desc: 'Artistas en vivo todos los fines de semana' },
+  { icon: '🍸', title: 'Buenos Cócteles',       desc: 'Mixología artesanal con ingredientes premium' },
+  { icon: '🍷', title: 'Vinos Premium',          desc: 'Selección curada de las mejores bodegas' },
+  { icon: '🍺', title: 'Cervezas Exclusivas',    desc: 'Nacionales e importadas de alta calidad' },
+  { icon: '📺', title: 'Deportes en Pantalla',   desc: 'Pantallas gigantes para los mejores eventos' },
+  { icon: '🎉', title: 'Eventos Especiales',      desc: 'Celebraciones privadas y corporativas' },
+  { icon: '🛋',  title: 'Área Lounge',            desc: 'Sofás y espacios cómodos para relajarte' },
+  { icon: '🌿', title: 'Terraza',                 desc: 'Ambiente al aire libre con decoración tropical' },
+  { icon: '🚪', title: 'Comedor Privado',         desc: 'Sala exclusiva para grupos y reuniones' },
+  { icon: '💃', title: 'Lugar para Bailar',       desc: 'Pista de baile con la mejor música' },
+  { icon: '⭐', title: 'Servicio Exclusivo',      desc: 'Atención personalizada y profesional' },
+  { icon: '✨', title: 'Ambiente Premium',         desc: 'Decoración de lujo e iluminación ambiental' }
+];
+
+function renderExperienceEditor() {
+  var data = cfgLoad('experience', DEFAULTS_EXPERIENCE);
+  var container = document.getElementById('experienceEditor');
+  if (!container) return;
+  container.innerHTML = data.map(function(item, i) {
+    return '<div class="exp-edit-row svc-row" style="align-items:center; gap:10px;" data-i="' + i + '">' +
+      '<input style="width:56px; text-align:center; font-size:1.3rem;" data-field="icon" value="' + (item.icon || '') + '" placeholder="🎵" />' +
+      '<input style="width:180px;" data-field="title" value="' + (item.title || '') + '" placeholder="Título" />' +
+      '<input style="flex:1;" data-field="desc" value="' + (item.desc || '') + '" placeholder="Descripción corta" />' +
+      '<button class="svc-del-btn" onclick="deleteExperienceItem(' + i + ')" title="Eliminar">🗑️</button>' +
+    '</div>';
+  }).join('');
+}
+window.renderExperienceEditor = renderExperienceEditor;
+
+function addExperienceItem() {
+  var data = cfgLoad('experience', DEFAULTS_EXPERIENCE);
+  data.push({ icon: '✨', title: 'Nuevo ítem', desc: 'Descripción del ítem' });
+  cfgSave('experience', data);
+  renderExperienceEditor();
+}
+window.addExperienceItem = addExperienceItem;
+
+function deleteExperienceItem(idx) {
+  var data = cfgLoad('experience', DEFAULTS_EXPERIENCE);
+  data.splice(idx, 1);
+  cfgSave('experience', data);
+  renderExperienceEditor();
+  showToast('Ítem eliminado');
+}
+window.deleteExperienceItem = deleteExperienceItem;
+
+/* ────────────────────────────────────────────
+   ¿POR QUÉ NOSOTROS? EDITOR
+──────────────────────────────────────────── */
+var DEFAULTS_WHYUS = [
+  { title: 'Excelente Ambiente',     desc: 'Decoración moderna con iluminación ambiental única' },
+  { title: 'Atención Profesional',   desc: 'Personal capacitado para brindarte la mejor experiencia' },
+  { title: 'Comida de Calidad',      desc: 'Ingredientes frescos y recetas exclusivas' },
+  { title: 'Perfecto para Grupos',   desc: 'Capacidad para grupos grandes con áreas reservadas' },
+  { title: 'Ambiente Seguro',        desc: 'Seguridad privada y personal de confianza' }
+];
+
+function renderWhyUsEditor() {
+  var data = cfgLoad('whyus', DEFAULTS_WHYUS);
+  var container = document.getElementById('whyusEditor');
+  if (!container) return;
+  container.innerHTML = data.map(function(item, i) {
+    return '<div class="why-edit-row svc-row" style="align-items:center; gap:10px;" data-i="' + i + '">' +
+      '<input style="flex:1;" data-field="title" value="' + (item.title || '') + '" placeholder="Característica" />' +
+      '<input style="flex:2;" data-field="desc" value="' + (item.desc || '') + '" placeholder="Descripción" />' +
+      '<button class="svc-del-btn" onclick="deleteWhyUsItem(' + i + ')" title="Eliminar">🗑️</button>' +
+    '</div>';
+  }).join('');
+}
+window.renderWhyUsEditor = renderWhyUsEditor;
+
+function addWhyUsItem() {
+  var data = cfgLoad('whyus', DEFAULTS_WHYUS);
+  data.push({ title: 'Nueva característica', desc: 'Descripción de la característica' });
+  cfgSave('whyus', data);
+  renderWhyUsEditor();
+}
+window.addWhyUsItem = addWhyUsItem;
+
+function deleteWhyUsItem(idx) {
+  var data = cfgLoad('whyus', DEFAULTS_WHYUS);
+  data.splice(idx, 1);
+  cfgSave('whyus', data);
+  renderWhyUsEditor();
+  showToast('Ítem eliminado');
+}
+window.deleteWhyUsItem = deleteWhyUsItem;
+
+/* ────────────────────────────────────────────
    SECURITY
 ──────────────────────────────────────────── */
 function changePassword() {
@@ -1117,7 +1229,8 @@ function initDOM() {
 
       /* 2. Recorre y guarda TODAS las demás secciones con datos en el DOM */
       var allSections = ['general','hero','menu','services','testimonials',
-                         'hours','social','gallery','colors','amenities'];
+                         'hours','social','gallery','colors','amenities',
+                         'experience','whyus'];
       allSections.forEach(function(name) {
         if (name === activeName) return; // ya fue guardada arriba
         var el = document.getElementById('sec-' + name);
