@@ -217,6 +217,26 @@ function applySiteConfig() {
     }
   });
 
+  /* Amenidades */
+  const amenities = loadCfg('amenities', null);
+  if (amenities && amenities.length) {
+    const grid = document.querySelector('.amen-grid');
+    if (grid) {
+      grid.innerHTML = amenities.map(card => `
+        <div class="amen-card">
+          <h3>${card.icon || ''} ${card.title || ''}</h3>
+          <ul>
+            ${(Array.isArray(card.items) ? card.items : []).map(item => `<li>✓ ${item}</li>`).join('')}
+          </ul>
+        </div>
+      `).join('');
+      /* Re-observar nuevas tarjetas para la animación reveal */
+      grid.querySelectorAll('.amen-card').forEach(el => {
+        if (typeof io !== 'undefined') io.observe(el);
+      });
+    }
+  }
+
   function setText(selector, text) {
     if (!text) return;
     const el = document.querySelector(selector);
